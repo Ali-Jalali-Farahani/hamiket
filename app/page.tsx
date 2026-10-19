@@ -1,69 +1,211 @@
-import Image from "next/image";
+"use client"
+import BoxConnection from '@/Components/BoxConntection';
+import ContextMenu from '@/Components/ContextMenu';
+import styled from '@emotion/styled';
+import { Box, Typography } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import Modal from '@mui/material/Modal';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import CustomModal from '@/Components/Modal';
+
+type itemsType = {
+  name: string,
+  sub?: itemsType[]
+}
 
 export default function Home() {
+
+  //selected item path
+  const [selectedPath, setSelectedPath] = useState<number[]>()
+
+  //for rerender dom (specially for svg  rerender-paths change)
+  const [rerender, setRerender] = useState<number>(0)
+
+  //items
+  const [allItems, setAllItems] = useState<itemsType>(
+    {
+      name: "حساب های اصلی",
+      sub: [
+        {
+          name: "دارایی های جاری", sub: [
+            {
+              name: "وجه نقد", sub: [
+                { name: "تن خواه", sub: [] },
+                { name: "بانک", sub: [] }
+              ]
+            },
+            {
+              name: "حساب های دریافتنی", sub: [
+                { name: "حساب های دریافتنی حامی کت", sub: [] }
+              ]
+            }
+          ]
+        },
+        { name: "دارایی های غیر جاری", sub: [] },
+        {
+          name: "بدهی های جاری", sub: [
+            {
+              name: "حساب های پرداختنی تجاری", sub: [
+                { name: "کیف پول پرداختنی خریدار", sub: [] },
+                { name: "حساب های پرداختنی فروشگاه", sub: [] },
+                { name: "حساب های پرداختنی فروشنده", sub: [] },
+                { name: "حساب های پرداختنی پیک", sub: [] }
+              ]
+            },
+            {
+              name: "حساب های پرداختنی غیر تجاری", sub: [
+                { name: "مالیات چرداختنی", sub: [] },
+                { name: "بیمه پرداختنی", sub: [] },
+                { name: "ارزش افزوده پرداختنی", sub: [] },
+                { name: "تامین کننده هزینه", sub: [] },
+                { name: "حقوق پرداختنی", sub: [] },
+              ]
+            }
+          ]
+        },
+        { name: "بدهی های غیر جاری", sub: [] },
+        { name: "حقوق صاحبان سهام", sub: [] },
+      ]
+    }
+  )
+
+  //item selected
+  const [itemSelected, setItemSelected] = useState<{ method: "copy" | "cut", item: itemsType } | null>()
+
+  //context menu location
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
+
+  //open modal
+  const [open, setOpen] = React.useState(false);
+
+  function copy() {
+    let current = allItems;
+    if (selectedPath) {
+      for (const index of selectedPath) {
+        if (!current?.sub || index < 0 || index >= current.sub.length) {
+          return undefined;
+        }
+        current = current.sub[index];
+      }
+
+      setItemSelected({ method: "copy", item: current })
+    }
+  }
+
+  function removeItem(root: itemsType, path: number[]): itemsType {
+    if (path.length === 0) return root;
+
+    const [index, ...rest] = path;
+
+    const newSub = root.sub ? [...root.sub] : [];
+    if (index < 0 || index >= newSub.length) return root;
+
+    if (rest.length === 0) {
+      let items = newSub.splice(index, 1);
+      setItemSelected({ method: "cut", item: items[0] })
+    } else {
+      newSub[index] = removeItem(newSub[index], rest);
+    }
+
+    return { ...root, sub: newSub };
+  }
+
+  function cut() {
+    if (selectedPath)
+      setAllItems(prev => removeItem(prev, selectedPath));
+    setRerender((render) => render + 1)
+  }
+
+
+  function addItem(root: itemsType, path: number[]): itemsType {
+    if (path.length === 0) return root;
+
+    const [index, ...rest] = path;
+
+    const newSub = root.sub ? [...root.sub] : [];
+    if (index < 0 || index >= newSub.length) {
+      return root;
+    }
+
+    if (rest.length === 0) {
+      if (itemSelected?.item) {
+        const target = newSub[index];
+        newSub[index] = {
+          ...target,
+          sub: [...(target.sub ?? []), itemSelected.item],
+        };
+      }
+    } else {
+      newSub[index] = addItem(newSub[index], rest);
+    }
+
+    return { ...root, sub: newSub };
+  }
+
+  function paste() {
+    if (selectedPath)
+      setAllItems(prev => addItem(prev, selectedPath));
+    setRerender((render) => render + 1)
+  }
+
+  function addNew(root: itemsType, path: number[], name: string): itemsType {
+    if (path.length === 0) return root;
+
+    const [index, ...rest] = path;
+
+    const newSub = root.sub ? [...root.sub] : [];
+    if (index < 0 || index >= newSub.length) {
+      return root;
+    }
+
+    if (rest.length === 0) {
+      const target = newSub[index];
+      newSub[index] = {
+        ...target,
+        sub: [...(target.sub ?? []), { name: name, sub: [] }],
+      };
+    } else {
+      newSub[index] = addNew(newSub[index], rest, name);
+    }
+
+    return { ...root, sub: newSub };
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div
+      dir='rtl'
+      className="w-full h-full flex flex-row p-4 gap-12 relative"
+    >
+      <ContextMenu contextMenu={contextMenu} setContextMenu={setContextMenu} cut={cut} copy={copy} paste={paste} />
+      <BoxConnection items={allItems} rerender={rerender} setRerender={setRerender} path={[]} setContextMenu={setContextMenu} setSelectedPath={setSelectedPath} setOpen={setOpen} />
+
+      <CustomModal
+        open={open}
+        setOpen={setOpen}
+        onKeyDown={(e, name) => {
+          if (e.key === 'Enter') {
+            if (name.length != 0 && selectedPath) {
+              setAllItems(prev => addNew(prev, selectedPath, name))
+              setRerender((rerender) => rerender + 1)
+              setOpen(false)
+            }
+          }
+        }}
+        onClick={
+          (name: string) => {
+            if (name.length != 0 && selectedPath) {
+              setAllItems(prev => addNew(prev, selectedPath, name))
+              setOpen(false)
+            }
+            setRerender((render) => render + 1)
+          }
+        }
+      />
     </div>
   );
 }

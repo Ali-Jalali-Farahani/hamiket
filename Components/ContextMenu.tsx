@@ -8,19 +8,6 @@ import ContentCopy from '@mui/icons-material/ContentCopy';
 import ContentPaste from '@mui/icons-material/ContentPaste';
 
 export default function ContextMenu({contextMenu,setContextMenu,cut,copy,paste}:{contextMenu: {mouseX: number;mouseY: number;} | null,setContextMenu:React.Dispatch<React.SetStateAction<{mouseX: number;mouseY: number;} | null>>,cut:Function,copy:Function,paste:Function}) {
-    const handleContextMenu = (event: React.MouseEvent) => {
-        event.preventDefault();
-        setContextMenu(
-            contextMenu === null
-                ? {
-                    mouseX: event.clientX + 2,
-                    mouseY: event.clientY - 6,
-                }
-                : // بستن منو در صورت راست کلیک مجدد
-                null,
-        );
-    };
-
     const handleClose = () => {
         setContextMenu(null);
     };

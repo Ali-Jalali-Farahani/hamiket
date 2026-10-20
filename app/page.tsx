@@ -179,20 +179,22 @@ export default function Home() {
   return (
     <div
       dir='rtl'
-      className="w-full h-full flex flex-row p-4 gap-12 relative"
+      className="w-full h-full flex flex-row p-4 gap-12 relative overflow-scroll"
+      onContextMenu={(e)=>e.preventDefault()}
     >
       <ContextMenu contextMenu={contextMenu} setContextMenu={setContextMenu} cut={cut} copy={copy} paste={paste} />
-      <BoxConnection items={allItems} rerender={rerender} setRerender={setRerender} path={[]} setContextMenu={setContextMenu} setSelectedPath={setSelectedPath} setOpen={setOpen} />
+      <BoxConnection items={allItems} rerender={rerender} setRerender={setRerender} path={[]} setContextMenu={setContextMenu} selectedPath={selectedPath} setSelectedPath={setSelectedPath} setOpen={setOpen} />
 
       <CustomModal
         open={open}
         setOpen={setOpen}
-        onKeyDown={(e, name) => {
+        onKeyDown={(e, name,setName) => {
           if (e.key === 'Enter') {
             if (name.length != 0 && selectedPath) {
               setAllItems(prev => addNew(prev, selectedPath, name))
               setRerender((rerender) => rerender + 1)
               setOpen(false)
+              setName("")
             }
           }
         }}

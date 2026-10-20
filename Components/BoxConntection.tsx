@@ -2,13 +2,15 @@
 import styled from '@emotion/styled';
 import { Box, Typography } from '@mui/material';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import AddIcon from '@mui/icons-material/Add';
 
 type itemsType = {
     name: string,
     sub?: itemsType[]
 }
 
-export default function BoxConnection({ items, rerender, setRerender, path = [], setContextMenu, setSelectedPath,setOpen }: { items: itemsType, rerender: number, setRerender: Dispatch<SetStateAction<number>>, path: number[], setContextMenu: Dispatch<SetStateAction<{ mouseX: number; mouseY: number; } | null>>, setSelectedPath: Dispatch<SetStateAction<number[] | undefined>>,setOpen:React.Dispatch<React.SetStateAction<boolean>> }) {
+export default function BoxConnection({ items, rerender, setRerender, path = [], setContextMenu, selectedPath, setSelectedPath, setOpen }: { items: itemsType, rerender: number, setRerender: Dispatch<SetStateAction<number>>, path: number[], setContextMenu: Dispatch<SetStateAction<{ mouseX: number; mouseY: number; } | null>>, selectedPath: number[] | undefined, setSelectedPath: Dispatch<SetStateAction<number[] | undefined>>, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const sourceRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -17,10 +19,13 @@ export default function BoxConnection({ items, rerender, setRerender, path = [],
 
     const [hide, setHide] = useState<boolean>(false)
 
+    let pathInSelectedPath: boolean = false
+
     const InfoBox = styled(Box)(({ theme }) => ({
-        backgroundColor: "#C98585",
-        color: '#fff',
-        padding: '12px 24px',
+        // color: 'black',
+        padding: '6px 12px',
+        borderColor: "#cc8a8a",
+        borderWidth: "2px",
         borderRadius: '8px',
         minWidth: '130px',
         textAlign: 'center',
@@ -51,7 +56,7 @@ export default function BoxConnection({ items, rerender, setRerender, path = [],
 
                 const end = {
                     x: r.right - cRect.left,
-                    y: r.top - cRect.top + 24,
+                    y: r.top - cRect.top + 20,
                 };
 
                 const d = `M ${start.x} ${start.y} L ${(start.x + end.x) / 2} ${start.y} L ${(start.x + end.x) / 2} ${end.y} L ${end.x} ${end.y}`;
@@ -77,8 +82,23 @@ export default function BoxConnection({ items, rerender, setRerender, path = [],
             "mouseY:", e.clientY - 6,)
     }
 
-    return (
+    //check current path is in selectedPath 
+    function checkCurrentPath() {
+        if (selectedPath) {
+            if (selectedPath.length >= path.length) {
+                let isInCurrentpath = path.every((index, i) => {
+                    return selectedPath[i] == index
+                })
+                if (isInCurrentpath) {
+                    pathInSelectedPath = true
+                }
+            }
+        }
+    }
 
+    checkCurrentPath()
+
+    return (
         <div className='h-fit flex flex-row gap-12 relative' ref={containerRef}>
             <svg
                 width={"100%"}
@@ -117,8 +137,8 @@ export default function BoxConnection({ items, rerender, setRerender, path = [],
                 ))}
             </svg>
 
-            <div className='h-fit' ref={sourceRef} onContextMenu={(e) => { setSelectedPath(path); handleContextMenu(e) }} onClick={() => { setHide(!hide);if(hide){itemRefs.current=[]}; setRerender((render) => render + 1); setSelectedPath(path); console.log(itemRefs) }}>
-                <InfoBox>
+            <div className='h-fit w-fit' ref={sourceRef} onContextMenu={(e) => { setSelectedPath(path); handleContextMenu(e) }} onClick={() => { setHide(!hide); if (hide) { itemRefs.current = [] }; setRerender((render) => render + 1); setSelectedPath(path); console.log(itemRefs) }}>
+                <InfoBox className={`${pathInSelectedPath ? "bg-[#cc8a8a] text-white" : "bg-white text-black"}`}>
                     <Typography variant="body1" component="span">{items.name}</Typography>
                 </InfoBox>
             </div>
@@ -129,7 +149,7 @@ export default function BoxConnection({ items, rerender, setRerender, path = [],
                         {
                             items.sub.map((selectedItems, index) => (
                                 <div key={index} ref={(el) => { itemRefs.current[index] = el; }}>
-                                    <BoxConnection items={selectedItems} rerender={rerender} setRerender={setRerender} path={[...path, index]} setContextMenu={setContextMenu} setSelectedPath={setSelectedPath} setOpen={setOpen}/>
+                                    <BoxConnection items={selectedItems} rerender={rerender} setRerender={setRerender} path={[...path, index]} setContextMenu={setContextMenu} selectedPath={selectedPath} setSelectedPath={setSelectedPath} setOpen={setOpen} />
                                 </div>
 
                             ))
@@ -139,8 +159,11 @@ export default function BoxConnection({ items, rerender, setRerender, path = [],
 
                 <div ref={(el) => { itemRefs.current.push(el) }}>
                     <div className='h-fit flex flex-row gap-12 relative' ref={containerRef}>
-                        <div className='h-fit cursor-pointer' onContextMenu={(e) => { setSelectedPath(path); handleContextMenu(e) }} onClick={() => {setSelectedPath(path);setOpen(true)}}>
-                            <InfoBox style={{ backgroundColor: "white", color: "black" }}>
+                        <div className='h-fit cursor-pointer' onContextMenu={(e) => { setSelectedPath(path); handleContextMenu(e) }} onClick={() => { setSelectedPath(path); setOpen(true) }}>
+                            <InfoBox style={{ backgroundColor: "white", color: "#cc8a8a",display:'flex' }}>
+                                <ListItemIcon sx={{color:"#cc8a8a"}}>
+                                    <AddIcon />
+                                </ListItemIcon>
                                 <Typography variant="body1" component="span">افزودن</Typography>
                             </InfoBox>
                         </div>

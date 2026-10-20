@@ -5,7 +5,7 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
-const CustomModal = ({ open, setOpen, onKeyDown, onClick }: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>,onKeyDown:(e:React.KeyboardEvent<HTMLDivElement>,name:string)=>void, onClick:(name:string)=>void }) => {
+const CustomModal = ({ open, setOpen, onKeyDown, onClick }: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>,onKeyDown:(e:React.KeyboardEvent<HTMLDivElement>,name:string,setName:React.Dispatch<React.SetStateAction<string>>)=>void, onClick:(name:string)=>void }) => {
 
     const style = {
         position: 'absolute',
@@ -40,7 +40,7 @@ const CustomModal = ({ open, setOpen, onKeyDown, onClick }: { open: boolean, set
                     label={"اسم نود:"}
                     value={name}
                     onChange={(e) => { setName(e.target.value) }}
-                    onKeyDown={(e)=>{onKeyDown(e,name)}}
+                    onKeyDown={(e)=>{onKeyDown(e,name,setName)}}
                     fullWidth
                     autoFocus
                     size="small"
